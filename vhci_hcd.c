@@ -1510,9 +1510,8 @@ static int __init vhci_hcd_init(void)
 {
 	int i, ret;
 
-	pr_debug("Hello\n");
-	return 0;
-
+	usbip_dbg_vhci_hc("Hello\n");
+	
 	if(usbip_init_eh())
 		return -ENOMEM;
 
@@ -1559,10 +1558,8 @@ err_driver_register:
 
 static void __exit vhci_hcd_exit(void)
 {
+	usbip_dbg_vhci_hc("Bye\n");
 
-	//usbip_dbg_vhci_hc("Bye\n");
-	pr_debug("Bye\n");
-	return;
 
 	del_platform_devices();
 	platform_driver_unregister(&vhci_driver);

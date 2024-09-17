@@ -3,3 +3,4 @@
 *.o*
 *.mod*
 *.ko*
+/.vscode
