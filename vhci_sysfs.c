@@ -90,14 +90,14 @@ static ssize_t status_show_vhci(int pdev_nr, char *out)
 		spin_unlock(&vdev->ud.lock);
 	}
 
-	for (i = 0; i < VHCI_HC_PORTS; i++) {
+	/*for (i = 0; i < VHCI_HC_PORTS; i++) {
 		struct vhci_device *vdev = &vhci->vhci_hcd_ss->vdev[i];
 
 		spin_lock(&vdev->ud.lock);
 		port_show_vhci(&out, HUB_SPEED_SUPER,
 			       pdev_nr * VHCI_PORTS + VHCI_HC_PORTS + i, vdev);
 		spin_unlock(&vdev->ud.lock);
-	}
+	}*/
 
 	spin_unlock_irqrestore(&vhci->lock, flags);
 
@@ -255,9 +255,9 @@ static ssize_t detach_store(struct device *dev, struct device_attribute *attr,
 
 	usbip_dbg_vhci_sysfs("rhport %d\n", rhport);
 
-	if ((port / VHCI_HC_PORTS) % 2)
+	/*if ((port / VHCI_HC_PORTS) % 2)
 		vhci_hcd = hcd_to_vhci_hcd(hcd)->vhci->vhci_hcd_ss;
-	else
+	else*/
 		vhci_hcd = hcd_to_vhci_hcd(hcd)->vhci->vhci_hcd_hs;
 
 	ret = vhci_port_disconnect(vhci_hcd, rhport);
@@ -349,9 +349,9 @@ static ssize_t attach_store(struct device *dev, struct device_attribute *attr,
 	vhci_hcd = hcd_to_vhci_hcd(hcd);
 	vhci = vhci_hcd->vhci;
 
-	if (speed == USB_SPEED_SUPER)
+	/*if (speed == USB_SPEED_SUPER)
 		vdev = &vhci->vhci_hcd_ss->vdev[rhport];
-	else
+	else*/
 		vdev = &vhci->vhci_hcd_hs->vdev[rhport];
 
 	mutex_lock(&vdev->ud.sysfs_lock);

@@ -73,11 +73,7 @@ enum hub_speed {
 };
 
 /* Number of supported ports. Value has an upperbound of USB_MAXCHILDREN */
-#ifdef CONFIG_USBIP_VHCI_HC_PORTS
-#define VHCI_HC_PORTS CONFIG_USBIP_VHCI_HC_PORTS
-#else
-#define VHCI_HC_PORTS 8
-#endif
+#define VHCI_HC_PORTS 2
 
 /* Each VHCI has 2 hubs (USB2 and USB3), each has VHCI_HC_PORTS ports */
 #define VHCI_PORTS	(VHCI_HC_PORTS*2)

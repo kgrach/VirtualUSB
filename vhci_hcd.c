@@ -704,6 +704,9 @@ static int vhci_urb_enqueue(struct usb_hcd *hcd, struct urb *urb, gfp_t mem_flag
 		pr_err("invalid port number %d\n", portnum);
 		return -ENODEV;
 	}
+
+	usbip_dbg_vhci_hc("vhci_urb_enqueue %d\n", portnum-1);
+
 	vdev = &vhci_hcd->vdev[portnum-1];
 
 	if (!urb->transfer_buffer && !urb->num_sgs &&
@@ -877,6 +880,8 @@ static int vhci_urb_dequeue(struct usb_hcd *hcd, struct urb *urb, int status)
 	spin_lock_irqsave(&vhci->lock, flags);
 
 	priv = urb->hcpriv;
+
+	usbip_dbg_vhci_hc("vhci_urb_dequeue\n");
 	if (!priv) {
 		/* URB was never linked! or will be soon given back by
 		 * vhci_rx. */
@@ -1369,7 +1374,7 @@ static int vhci_hcd_probe(struct platform_device *pdev)
 		goto put_usb2_hcd;
 	}
 
-	hcd_ss = usb_create_shared_hcd(&vhci_hc_driver, &pdev->dev,
+	/*hcd_ss = usb_create_shared_hcd(&vhci_hc_driver, &pdev->dev,
 				       dev_name(&pdev->dev), hcd_hs);
 	if (!hcd_ss) {
 		ret = -ENOMEM;
@@ -1381,7 +1386,7 @@ static int vhci_hcd_probe(struct platform_device *pdev)
 	if (ret) {
 		pr_err("usb_add_hcd ss failed %d\n", ret);
 		goto put_usb3_hcd;
-	}
+	}*/
 
 	usbip_dbg_vhci_hc("bye\n");
 	return 0;
@@ -1406,14 +1411,14 @@ static void vhci_hcd_remove(struct platform_device *pdev)
 	 * then reverses the effects of usb_add_hcd(),
 	 * invoking the HCD's stop() methods.
 	 */
-	usb_remove_hcd(vhci_hcd_to_hcd(vhci->vhci_hcd_ss));
-	usb_put_hcd(vhci_hcd_to_hcd(vhci->vhci_hcd_ss));
+	//usb_remove_hcd(vhci_hcd_to_hcd(vhci->vhci_hcd_ss));
+	//usb_put_hcd(vhci_hcd_to_hcd(vhci->vhci_hcd_ss));
 
 	usb_remove_hcd(vhci_hcd_to_hcd(vhci->vhci_hcd_hs));
 	usb_put_hcd(vhci_hcd_to_hcd(vhci->vhci_hcd_hs));
 
 	vhci->vhci_hcd_hs = NULL;
-	vhci->vhci_hcd_ss = NULL;
+	//vhci->vhci_hcd_ss = NULL;
 }
 
 #ifdef CONFIG_PM
