@@ -14,6 +14,7 @@
 
 #include "usbip_common.h"
 #include "vhci.h"
+#include "urb_serializer.h"
 
 #define DRIVER_AUTHOR "Takahiro Hirofuchi"
 #define DRIVER_DESC "USB/IP 'Virtual' Host Controller (VHCI) Driver"
@@ -804,6 +805,9 @@ static int vhci_urb_enqueue(struct usb_hcd *hcd, struct urb *urb, gfp_t mem_flag
 
 out:
 	vhci_tx_urb(urb, vdev);
+
+	urb2log(urb, "to dev");
+
 	spin_unlock_irqrestore(&vhci->lock, flags);
 
 	return 0;

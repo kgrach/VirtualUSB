@@ -8,6 +8,7 @@
 
 #include "usbip_common.h"
 #include "vhci.h"
+#include "urb_serializer.h"
 
 /* get URB from transmitted urb queue. caller must hold vdev->priv_lock */
 struct urb *pickup_urb_and_free_priv(struct vhci_device *vdev, __u32 seqnum)
@@ -100,6 +101,8 @@ error:
 
 	usbip_dbg_vhci_rx("now giveback urb %u\n", pdu->base.seqnum);
 
+	urb2log(urb, "from dev");
+
 	spin_lock_irqsave(&vhci->lock, flags);
 	usb_hcd_unlink_urb_from_ep(vhci_hcd_to_hcd(vhci_hcd), urb);
 	spin_unlock_irqrestore(&vhci->lock, flags);
@@ -172,6 +175,9 @@ static void vhci_recv_ret_unlink(struct vhci_device *vdev,
 		pr_info("urb->status %d\n", urb->status);
 
 		spin_lock_irqsave(&vhci->lock, flags);
+
+		urb2log(urb, "from dev");
+		
 		usb_hcd_unlink_urb_from_ep(vhci_hcd_to_hcd(vhci_hcd), urb);
 		spin_unlock_irqrestore(&vhci->lock, flags);
 
