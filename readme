@@ -1,1 +1,6 @@
+Build  
 1) apt install libncurses-dev build-essential
+
+Doc
+  https://www.kernel.org/doc/html/latest/driver-api/usb/usb.html#c.urb
+  https://www.kernel.org/doc/html/latest/driver-api/usb/URB.html
