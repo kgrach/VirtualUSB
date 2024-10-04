@@ -3,4 +3,5 @@
 *.o*
 *.mod*
 *.ko*
-/.vscode
+/.vscode/settings.json
+*/out

@@ -4,3 +4,14 @@ Build
 Doc
   https://www.kernel.org/doc/html/latest/driver-api/usb/usb.html#c.urb
   https://www.kernel.org/doc/html/latest/driver-api/usb/URB.html
+
+  How to use
+
+  Vhci is controlled a user application throw vusb char driver.
+  Char driver has major num = 42 and minor in range 0 to 5.
+  
+  sudo mknod /dev/vusb1 c 42 0    # for char driver need create a file
+  sudo chmod go+rw /dev/vusb1     # for write operations into char driver
+
+  ls -l /dev/vusb1                # see current file access
+  
