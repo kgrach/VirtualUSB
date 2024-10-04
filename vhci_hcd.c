@@ -16,6 +16,9 @@
 #include "vhci.h"
 #include "urb_serializer.h"
 
+int vusb_init(void);
+void vusb_cleanup(void);
+
 #define DRIVER_AUTHOR "Takahiro Hirofuchi"
 #define DRIVER_DESC "USB/IP 'Virtual' Host Controller (VHCI) Driver"
 
@@ -1556,6 +1559,8 @@ static int __init vhci_hcd_init(void)
 		}
 	}
 
+	vusb_init();
+
 	return 0;
 
 err_add_hcd:
@@ -1569,6 +1574,7 @@ static void __exit vhci_hcd_exit(void)
 {
 	usbip_dbg_vhci_hc("Bye\n");
 
+	vusb_cleanup();
 
 	del_platform_devices();
 	platform_driver_unregister(&vhci_driver);
