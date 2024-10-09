@@ -15,6 +15,9 @@ void urb2log(struct urb *urb, const char* context) {
 
     pr_debug("---- Start %d, (%s) ----", log_num, context);
 
+    print_hex_dump(KERN_DEBUG, "urb                        ", DUMP_PREFIX_NONE, sizeof(urb),       
+                    8, urb, sizeof(urb), false);
+
     print_hex_dump(KERN_DEBUG, "urb.pipe                        ", DUMP_PREFIX_NONE, sizeof(urb->pipe),       
                     4, &urb->pipe, sizeof(urb->pipe), false);
 

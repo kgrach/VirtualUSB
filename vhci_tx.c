@@ -10,6 +10,8 @@
 #include "usbip_common.h"
 #include "vhci.h"
 
+#include "char_driver.h"
+
 static void setup_cmd_submit_pdu(struct usbip_header *pdup,  struct urb *urb)
 {
 	struct vhci_priv *priv = ((struct vhci_priv *)urb->hcpriv);
