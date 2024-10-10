@@ -2,36 +2,35 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <thread>
+#include <vector>
 
-#define BUF_SIZE 4096
+#include "UsbConfig.hpp"
 
 using namespace std;
 
 /* Example inspired from open(2) */
 int main(int argc, const char **argv)
 {
-	char buf[BUF_SIZE];
+
 	int fd;
+	vector<unsigned char> request(8), response;
 
 	fd = open("/dev/vusb1", O_RDWR);
 
-	while(1){
+	while(1) {
 		
 		ssize_t size;
-		size = read(fd, buf, sizeof(ssize_t));
+	
+		size = read(fd, request.data(), 8);
 
 		if(!size) {
 			this_thread::sleep_for(2s);
 			continue;
 		}
 
-		size = *(ssize_t*)&buf[0];
-
-		size = read(fd, buf, size);
+		response = GetResponse(request);
 	    
-		//ssize_t len = write(fd, "Hello,", 6);
-		
-		break;
+		size = write(fd, response.data(), response.size());
 	}
 
 	//

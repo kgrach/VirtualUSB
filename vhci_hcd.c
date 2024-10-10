@@ -809,7 +809,7 @@ out:
 	
 	urb2log(urb, "to dev");
 
-	RequestUrb(urb);
+	RequestUrb(urb, hcd);
 
 	spin_unlock_irqrestore(&vhci->lock, flags);
 
