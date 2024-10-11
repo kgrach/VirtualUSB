@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <iomanip>
 
 using namespace std;
 
@@ -173,8 +174,6 @@ vector<unsigned char> GetResponse(vector<unsigned char>& setup_packet) {
             res.push_back(i);
         }
     }
-
-
     else {
         cout << "Unknown request: ";
         for (auto i : setup_packet)
