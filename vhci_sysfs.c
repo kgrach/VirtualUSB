@@ -400,8 +400,8 @@ static ssize_t attach_store(struct device *dev, struct device_attribute *attr,
 		spin_unlock_irqrestore(&vhci->lock, flags);
 
 		sockfd_put(socket);
-		kthread_stop_put(tcp_rx);
-		kthread_stop_put(tcp_tx);
+		kthread_stop(tcp_rx);
+		kthread_stop(tcp_tx);
 
 		dev_err(dev, "port %d already used\n", rhport);
 		/*
