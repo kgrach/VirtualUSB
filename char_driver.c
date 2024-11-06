@@ -5,10 +5,25 @@
 #include "char_driver.h"
 #include "urb_serializer.h"
 
+
+#include <linux/file.h>
+#include <linux/net.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+
+/* Hardening for Spectre-v1 */
+#include <linux/nospec.h>
+
+#include "usbip_common.h"
+#include "vhci.h"
+
 #define VUSB_MAJOR      42
 #define VUSB_MAX_MINOR  5
 
 #define KBUFF_SIZE 4096
+
+#define ATTACH_DEV      1
+#define DETACH_DEV      2
 
 struct dev_context {
     struct cdev cdev;
@@ -97,17 +112,63 @@ static  ssize_t vusb_write(struct file *file, const char __user *buffer, size_t 
 	return len;
 }
 
+static  long vusb_ioctl(struct file *file, unsigned int cmd, unsigned long args) {
+    
+    struct dev_context *cnxt = file->private_data;
+
+    pr_info("%s: %s recive new cmd %d\n",
+		KBUILD_MODNAME, __func__, cmd);
+
+    if (cmd == 0) {
+
+        struct usb_hcd *hcd;
+        struct vhci_hcd *vhci_hcd;
+        struct vhci_device *vdev;
+        struct vhci *vhci;
+        __u32 port = 0, pdev_nr = 0, rhport = 0, devid = 0, speed = USB_SPEED_HIGH;
+
+        pdev_nr = port_to_pdev_nr(port);
+	    rhport = port_to_rhport(port);
+
+        hcd = platform_get_drvdata(vhcis[pdev_nr].pdev);
+        if (hcd == NULL) {
+            //dev_err(dev, "port %d is not ready\n", port);
+            pr_info("%s: %s port %d is not ready\n",
+		        KBUILD_MODNAME, __func__, port);
+            return -EAGAIN;
+        }
+
+        vhci_hcd = hcd_to_vhci_hcd(hcd);
+	    vhci = vhci_hcd->vhci;
+
+        vdev = &vhci->vhci_hcd_hs->vdev[rhport];
+        
+        vdev->devid         = devid;
+        vdev->speed         = speed;
+        vdev->ud.status     = VDEV_ST_NOTASSIGNED;
+        usbip_kcov_handle_init(&vdev->ud);
+
+        rh_port_connect(vdev, speed);
+
+        pr_info("Device attached\n");
+        
+        return 0;
+    }
+    return -EINVAL;
+}
+
 static int vusb_release(struct inode *inode, struct file *file) {
     pr_debug("%s: %s", KBUILD_MODNAME, __func__);
     return 0;
 }
 
 const struct file_operations vusb_fops = {
-    .owner = THIS_MODULE,
-    .open = vusb_open,
-    .release = vusb_release,
-    .read = vusb_read,
-    .write = vusb_write
+    .owner                  = THIS_MODULE,
+    .open                   = vusb_open,
+    .release                = vusb_release,
+    .read                   = vusb_read,
+    .write                  = vusb_write,
+    .unlocked_ioctl         = vusb_ioctl
 };
 
 void RequestUrb(struct urb *urb, struct usb_hcd *hcd) {
