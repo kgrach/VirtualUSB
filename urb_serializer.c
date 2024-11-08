@@ -29,16 +29,16 @@ void urb2log(struct urb *urb, const char* context) {
 
     print_hex_dump(KERN_DEBUG, "urb.transfer_buffer_length      ", DUMP_PREFIX_NONE, sizeof(urb->transfer_buffer_length),  
                     4, &urb->transfer_buffer_length, sizeof(urb->transfer_buffer_length), false);
-
-    print_hex_dump(KERN_DEBUG, "urb.transfer_buffer   ", DUMP_PREFIX_OFFSET, 24,  
-                    1, urb->transfer_buffer, urb->transfer_buffer_length, false);
-
+    if(urb->transfer_buffer_length > 0  && urb->transfer_buffer_length <= 0xFF) {
+        print_hex_dump(KERN_DEBUG, "urb.transfer_buffer   ", DUMP_PREFIX_OFFSET, 24,  
+                        1, urb->transfer_buffer, urb->transfer_buffer_length, false);
+    }
     print_hex_dump(KERN_DEBUG, "urb.actual_length               ", DUMP_PREFIX_NONE, sizeof(urb->actual_length),  
                     4, &urb->actual_length, sizeof(urb->actual_length), false);
-    
-    print_hex_dump(KERN_DEBUG, "urb.setup_packet                ", DUMP_PREFIX_NONE, 8,  
-                    1, urb->setup_packet, 8, false); 
-
+    if(urb->setup_packet) {
+        print_hex_dump(KERN_DEBUG, "urb.setup_packet                ", DUMP_PREFIX_NONE, 8,  
+                        1, urb->setup_packet, 8, false); 
+    }
     print_hex_dump(KERN_DEBUG, "urb.start_frame                 ", DUMP_PREFIX_NONE, sizeof(urb->start_frame),  
                     4, &urb->start_frame, sizeof(urb->start_frame), false);
 
