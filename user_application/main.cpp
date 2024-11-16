@@ -15,6 +15,7 @@ int main(int argc, const char **argv)
 {
 
 	int fd;
+	
 	vector<unsigned char> request(8), response;
 
 	fd = open("/dev/vusb1", O_RDWR);
