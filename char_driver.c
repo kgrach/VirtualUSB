@@ -32,9 +32,6 @@ struct dev_context {
     // ... context
     size_t kbuff_size;
     char *kbuff;
-    //struct urb *urb;
-    //struct usb_hcd *hcd;
-    //int request_len;
 };
 
 struct list_item {
@@ -79,15 +76,10 @@ static ssize_t vusb_read(struct file *file, char __user *buffer, size_t size, lo
     int empty;
     ssize_t ret = 0;
 
-    //pr_info("%s: %s Here 1 \n", KBUILD_MODNAME, __func__);
-
     spin_lock_irqsave(&lock_urb_list, flags);
     
     empty = list_empty(&urb_reqs);
-
-    //pr_info("%s: %s Here 2 \n", KBUILD_MODNAME, __func__);
-
-    
+   
     if(!empty) {
 
         pr_info("%s: %s Here 3 \n", KBUILD_MODNAME, __func__);
@@ -105,11 +97,8 @@ static ssize_t vusb_read(struct file *file, char __user *buffer, size_t size, lo
 
         ret = 8;
     }
-    //pr_info("%s: %s Here 6 \n", KBUILD_MODNAME, __func__);
 
     spin_unlock_irqrestore(&lock_urb_list, flags); 
-
-    //pr_info("%s: %s Here 7 \n", KBUILD_MODNAME, __func__);
 
 	return ret;
 }
@@ -193,7 +182,6 @@ static  long vusb_ioctl(struct file *file, unsigned int cmd, unsigned long args)
 
         hcd = platform_get_drvdata(vhcis[pdev_nr].pdev);
         if (hcd == NULL) {
-            //dev_err(dev, "port %d is not ready\n", port);
             pr_info("%s: %s port %d is not ready\n",
 		        KBUILD_MODNAME, __func__, port);
             return -EAGAIN;
@@ -244,28 +232,11 @@ void RequestUrb(struct urb *urb, struct usb_hcd *hcd) {
     unsigned long	flags;
     spin_lock_irqsave(&lock_urb_list, flags);
 
-    //pr_info("%s: %s Here 2 \n", KBUILD_MODNAME, __func__);
-
     list_add_tail(&it->list, &urb_reqs);
-
-    //pr_info("%s: %s Here 3 \n", KBUILD_MODNAME, __func__);
 
     spin_unlock_irqrestore(&lock_urb_list, flags);
 
     pr_info("%s: %s Here 4 \n", KBUILD_MODNAME, __func__);
-
-    /*devs[0].urb = urb;
-    devs[0].hcd = hcd;
-    
-    ssize_t offset = 0;
-
-    memcpy(devs[0].kbuff, urb->setup_packet, 8);
-    offset += 8;
-
-    print_hex_dump(KERN_DEBUG, "devs[0].kbuff ", DUMP_PREFIX_NONE, 0,  
-                    1, devs[0].kbuff, 20, false);
-
-    devs[0].request_len = offset;*/
 }
 
 int vusb_init(void) {
@@ -293,7 +264,6 @@ int vusb_init(void) {
         pr_debug("%s: %s devs[%d].kbuff=%p", KBUILD_MODNAME, __func__, i, devs[i].kbuff);
 
         devs[i].kbuff_size = KBUFF_SIZE;
-        //devs[i].request_len = 0;
 
         cdev_init(&devs[i].cdev, &vusb_fops);
         cdev_add(&devs[i].cdev, MKDEV(VUSB_MAJOR, i), 1);
