@@ -4,12 +4,14 @@
 
 #include "urb_serializer.h"
 
-static unsigned long	flags;
-static spinlock_t       lock;
+
+static DEFINE_SPINLOCK(lock);
 unsigned int log_num = 0;
 
 
 void urb2log(struct urb *urb, const char* context) {
+    
+    unsigned long	flags;
 
     spin_lock_irqsave(&lock, flags);
 

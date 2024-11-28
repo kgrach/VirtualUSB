@@ -28,7 +28,7 @@ int main(int argc, const char **argv)
 		size = read(fd, request.data(), 8);
 
 		if(!size) {
-			this_thread::sleep_for(2s);
+			this_thread::sleep_for(100ms);
 			continue;
 		}
 

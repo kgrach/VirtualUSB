@@ -887,7 +887,7 @@ static int vhci_urb_dequeue(struct usb_hcd *hcd, struct urb *urb, int status)
 
 	spin_lock_irqsave(&vhci->lock, flags);
 
-	urb2log(urb, "to dev");
+	urb2log(urb, "to dev deque");
 
 	priv = urb->hcpriv;
 

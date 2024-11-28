@@ -176,7 +176,7 @@ static void vhci_recv_ret_unlink(struct vhci_device *vdev,
 
 		spin_lock_irqsave(&vhci->lock, flags);
 
-		urb2log(urb, "from dev");
+		urb2log(urb, "from dev unlink");
 		
 		usb_hcd_unlink_urb_from_ep(vhci_hcd_to_hcd(vhci_hcd), urb);
 		spin_unlock_irqrestore(&vhci->lock, flags);

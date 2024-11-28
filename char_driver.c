@@ -1,6 +1,8 @@
 #include <linux/fs.h>
 #include <linux/cdev.h>
 #include <asm/uaccess.h>
+#include <linux/spinlock.h>
+#include <linux/list.h>
 
 #include "char_driver.h"
 #include "urb_serializer.h"
@@ -30,12 +32,21 @@ struct dev_context {
     // ... context
     size_t kbuff_size;
     char *kbuff;
-    struct urb *urb;
-    struct usb_hcd *hcd;
-    int request_len;
+    //struct urb *urb;
+    //struct usb_hcd *hcd;
+    //int request_len;
 };
 
+struct list_item {
+    struct list_head list;
+    struct urb *urb;
+    struct usb_hcd *hcd;
+};
+
+static struct list_head urb_reqs;
+static DEFINE_SPINLOCK(lock_urb_list);
 struct dev_context devs[VUSB_MAX_MINOR];
+
 
 static int vusb_open(struct inode *inode, struct file *file) {
     struct dev_context *cnxt;
@@ -51,7 +62,7 @@ static int vusb_open(struct inode *inode, struct file *file) {
 
 static ssize_t vusb_read(struct file *file, char __user *buffer, size_t size, loff_t *offset) {
     
-    struct dev_context *cnxt = file->private_data;
+    /*struct dev_context *cnxt = file->private_data;
 
     ssize_t len = min(cnxt->kbuff_size, size);
 
@@ -62,15 +73,45 @@ static ssize_t vusb_read(struct file *file, char __user *buffer, size_t size, lo
 
     if(len <= 0 || !cnxt->request_len) {
         return 0;
-    }
-	
-    if(copy_to_user(buffer, cnxt->kbuff, len)){
-        return -EFAULT;
-    }
-	
-    cnxt->request_len -= len;
+    }*/
 
-	return len;
+    unsigned long	flags;
+    int empty;
+    ssize_t ret = 0;
+
+    pr_info("%s: %s Here 1 \n", KBUILD_MODNAME, __func__);
+
+    spin_lock_irqsave(&lock_urb_list, flags);
+    
+    empty = list_empty(&urb_reqs);
+
+    pr_info("%s: %s Here 2 \n", KBUILD_MODNAME, __func__);
+
+    
+    if(!empty) {
+
+        pr_info("%s: %s Here 3 \n", KBUILD_MODNAME, __func__);
+
+
+        struct list_item *entry=list_entry(urb_reqs.next, struct list_item, list);
+        
+        pr_info("%s: %s Here 4 \n", KBUILD_MODNAME, __func__);
+
+        if(copy_to_user(buffer, entry->urb->setup_packet, 8)) {
+            ret = -EFAULT;
+        }
+
+        pr_info("%s: %s Here 5 \n", KBUILD_MODNAME, __func__);
+
+        ret = 8;
+    }
+    pr_info("%s: %s Here 6 \n", KBUILD_MODNAME, __func__);
+
+    spin_unlock_irqrestore(&lock_urb_list, flags); 
+
+    pr_info("%s: %s Here 7 \n", KBUILD_MODNAME, __func__);
+
+	return ret;
 }
 
 static  ssize_t vusb_write(struct file *file, const char __user *buffer, size_t size, loff_t *offset) {
@@ -83,38 +124,58 @@ static  ssize_t vusb_write(struct file *file, const char __user *buffer, size_t 
         return 0;
     }
 
-	pr_info("%s: %s about to write %ld bytes\n",
-		KBUILD_MODNAME, __func__, size);
+	pr_info("%s: %s Here 1 \n", KBUILD_MODNAME, __func__);
 	
     if(copy_from_user(cnxt->kbuff, buffer, len)) {
         return -EFAULT;
     }
 
-    print_hex_dump(KERN_DEBUG, "cnxt->kbuff ", DUMP_PREFIX_NONE, 0,  
-                1, cnxt->kbuff, 20, false);
+    //print_hex_dump(KERN_DEBUG, "cnxt->kbuff ", DUMP_PREFIX_NONE, 0,  
+    //            1, cnxt->kbuff, 20, false);
+
+    unsigned long	flags;
+
+    pr_info("%s: %s Here 2 \n", KBUILD_MODNAME, __func__);
+
+    spin_lock_irqsave(&lock_urb_list, flags);
+
+    pr_info("%s: %s Here 3 \n", KBUILD_MODNAME, __func__);
+
+    struct list_item *entry=list_entry(urb_reqs.next, struct list_item, list);
+    pr_info("%s: %s Here 4 \n", KBUILD_MODNAME, __func__);
+    list_del(&entry->list);
+    pr_info("%s: %s Here 5 \n", KBUILD_MODNAME, __func__);
+
+    spin_unlock_irqrestore(&lock_urb_list, flags); 
 
     ssize_t kbuff_offset = 0;
+    pr_info("%s: %s Here 6 \n", KBUILD_MODNAME, __func__);
 
-    memcpy(&cnxt->urb->status, cnxt->kbuff + kbuff_offset, sizeof(cnxt->urb->status));
-    kbuff_offset += sizeof(cnxt->urb->status);
+    memcpy(&entry->urb->status, cnxt->kbuff + kbuff_offset, sizeof(entry->urb->status));
+    kbuff_offset += sizeof(entry->urb->status);
 
-    memcpy(&cnxt->urb->actual_length, cnxt->kbuff + kbuff_offset, sizeof(cnxt->urb->actual_length));
-    kbuff_offset += sizeof(cnxt->urb->actual_length);
+    memcpy(&entry->urb->actual_length, cnxt->kbuff + kbuff_offset, sizeof(entry->urb->actual_length));
+    kbuff_offset += sizeof(entry->urb->actual_length);
 
-    memcpy(cnxt->urb->transfer_buffer, cnxt->kbuff + kbuff_offset, cnxt->urb->actual_length);
-    kbuff_offset += cnxt->urb->actual_length;
+    memcpy(entry->urb->transfer_buffer, cnxt->kbuff + kbuff_offset, entry->urb->actual_length);
+    kbuff_offset += sizeof(entry->urb->transfer_buffer);
 
-    urb2log(cnxt->urb, "User response");
+    pr_info("%s: %s Here 7 \n", KBUILD_MODNAME, __func__);
+    
+    urb2log(entry->urb, "User response");
 
-   	usb_hcd_unlink_urb_from_ep(cnxt->hcd, cnxt->urb);
-	usb_hcd_giveback_urb(cnxt->hcd, cnxt->urb, cnxt->urb->status);
-	
-	return len;
+   	usb_hcd_unlink_urb_from_ep(entry->hcd, entry->urb);
+    usb_hcd_giveback_urb(entry->hcd, entry->urb, entry->urb->status);
+
+    pr_info("%s: %s Here 8 \n", KBUILD_MODNAME, __func__);
+    kfree(entry);
+
+	return kbuff_offset;
 }
 
 static  long vusb_ioctl(struct file *file, unsigned int cmd, unsigned long args) {
     
-    struct dev_context *cnxt = file->private_data;
+    //struct dev_context *cnxt = file->private_data;
 
     pr_info("%s: %s recive new cmd %d\n",
 		KBUILD_MODNAME, __func__, cmd);
@@ -172,8 +233,28 @@ const struct file_operations vusb_fops = {
 };
 
 void RequestUrb(struct urb *urb, struct usb_hcd *hcd) {
+    
+    struct list_item *it = kmalloc(sizeof(struct list_item), GFP_KERNEL);
+    
+    it->urb = urb;
+    it->hcd = hcd;
 
-    devs[0].urb = urb;
+    pr_info("%s: %s Here 1 \n", KBUILD_MODNAME, __func__);
+
+    unsigned long	flags;
+    spin_lock_irqsave(&lock_urb_list, flags);
+
+    //pr_info("%s: %s Here 2 \n", KBUILD_MODNAME, __func__);
+
+    list_add_tail(&it->list, &urb_reqs);
+
+    //pr_info("%s: %s Here 3 \n", KBUILD_MODNAME, __func__);
+
+    spin_unlock_irqrestore(&lock_urb_list, flags);
+
+    pr_info("%s: %s Here 4 \n", KBUILD_MODNAME, __func__);
+
+    /*devs[0].urb = urb;
     devs[0].hcd = hcd;
     
     ssize_t offset = 0;
@@ -184,7 +265,7 @@ void RequestUrb(struct urb *urb, struct usb_hcd *hcd) {
     print_hex_dump(KERN_DEBUG, "devs[0].kbuff ", DUMP_PREFIX_NONE, 0,  
                     1, devs[0].kbuff, 20, false);
 
-    devs[0].request_len = offset;
+    devs[0].request_len = offset;*/
 }
 
 int vusb_init(void) {
@@ -196,6 +277,8 @@ int vusb_init(void) {
     if(err != 0){
         return err;
     }
+
+    INIT_LIST_HEAD(&urb_reqs);
 
     int i;
 
@@ -210,7 +293,7 @@ int vusb_init(void) {
         pr_debug("%s: %s devs[%d].kbuff=%p", KBUILD_MODNAME, __func__, i, devs[i].kbuff);
 
         devs[i].kbuff_size = KBUFF_SIZE;
-        devs[i].request_len = 0;
+        //devs[i].request_len = 0;
 
         cdev_init(&devs[i].cdev, &vusb_fops);
         cdev_add(&devs[i].cdev, MKDEV(VUSB_MAJOR, i), 1);
