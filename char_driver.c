@@ -79,13 +79,13 @@ static ssize_t vusb_read(struct file *file, char __user *buffer, size_t size, lo
     int empty;
     ssize_t ret = 0;
 
-    pr_info("%s: %s Here 1 \n", KBUILD_MODNAME, __func__);
+    //pr_info("%s: %s Here 1 \n", KBUILD_MODNAME, __func__);
 
     spin_lock_irqsave(&lock_urb_list, flags);
     
     empty = list_empty(&urb_reqs);
 
-    pr_info("%s: %s Here 2 \n", KBUILD_MODNAME, __func__);
+    //pr_info("%s: %s Here 2 \n", KBUILD_MODNAME, __func__);
 
     
     if(!empty) {
@@ -105,11 +105,11 @@ static ssize_t vusb_read(struct file *file, char __user *buffer, size_t size, lo
 
         ret = 8;
     }
-    pr_info("%s: %s Here 6 \n", KBUILD_MODNAME, __func__);
+    //pr_info("%s: %s Here 6 \n", KBUILD_MODNAME, __func__);
 
     spin_unlock_irqrestore(&lock_urb_list, flags); 
 
-    pr_info("%s: %s Here 7 \n", KBUILD_MODNAME, __func__);
+    //pr_info("%s: %s Here 7 \n", KBUILD_MODNAME, __func__);
 
 	return ret;
 }
